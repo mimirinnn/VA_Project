@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Visualization Dashboard</title>
+
+</head>
+<body>
+  <div id="root">
+    <!-- Filters Panel -->
+    <div class="filters">
+      <h3>Filters</h3>
+
+      <!-- Year Range Sliders -->
+      <label for="year-slider-min">Year Range:</label>
+      <div class="slider-container">
+        <input type="range" id="year-slider-min">
+        <input type="range" id="year-slider-max">
+      </div>
+      <div>
+        <span id="year-range">Loading...</span>
+      </div>
+
+      <!-- Region Filter -->
+      <label for="region">Region:</label>
+      <select id="region">
+        <option value="all">All Regions</option>
+        <option value="NA">North America</option>
+        <option value="EU">Europe</option>
+        <option value="JP">Japan</option>
+        <option value="Other">Other Regions</option>
+      </select>
+
+      <div class="collapsible">
+        <button class="toggle-btn" id="toggle-platforms">Platforms ▼</button>
+        <div id="platforms" class="checkbox-container"></div>
+    </div>
+    
+    <div class="collapsible">
+        <button class="toggle-btn" id="toggle-genres">Genres ▼</button>
+        <div id="genres" class="checkbox-container"></div>
+    </div>
+    
+
+      <button id="reset">Reset Filters</button>
+    </div>
+
+    <!-- Charts -->
+    <div class="chart time-series">
+      <h3>Time-Series Graph</h3>
+      <svg id="time-series-chart" width="600" height="300"></svg>
+    </div>    
+    <div class="toggle-container">
+      <span>Show:</span>
+      <label class="switch">
+          <input type="checkbox" id="toggle-category">
+          <span class="slider round"></span>
+      </label>
+      <span id="category-label">Genres</span>
+  </div>    
+    <div class="chart heatmap">
+      <h3>Heatmap</h3>
+      <svg id="heatmap-chart" width="400" height="200"></svg>
+    </div>
+
+    <div class="chart t-sne">
+      <h3>T-SNE Plot</h3>
+      <svg id="t-sne-chart" width="400" height="200"></svg>
+    </div>
+  </div>
+
+</body>
+</html>
