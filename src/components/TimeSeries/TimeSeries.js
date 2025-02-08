@@ -167,7 +167,6 @@ export function renderTimeSeries (data, selectedCategory = 'Genre') {
     .attr('text-anchor', 'middle')
     .style('font-size', '16px')
     .style('font-weight', 'bold')
-    .text(`Time-Series Graph: Top 5 ${selectedCategory}s`)
 }
 
 // **Експортуємо функцію**

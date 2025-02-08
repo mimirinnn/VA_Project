@@ -223,3 +223,19 @@ input:checked + .slider:before {
   pointer-events: none;
   opacity: 0.5;
 }
+
+.year-input-container {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.year-input {
+  width: 50px;
+  text-align: center;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}

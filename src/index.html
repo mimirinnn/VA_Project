@@ -12,15 +12,16 @@
     <div class="filters">
       <h3>Filters</h3>
 
-      <!-- Year Range Sliders -->
-      <label for="year-slider-min">Year Range:</label>
-      <div class="slider-container">
+          <label for="year-slider-min">Year Range:</label>
+    <div class="slider-container">
         <input type="range" id="year-slider-min">
         <input type="range" id="year-slider-max">
-      </div>
-      <div>
-        <span id="year-range">Loading...</span>
-      </div>
+    </div>
+    <div class="year-input-container">
+        <input type="text" id="year-input-min" class="year-input" maxlength="4">
+        <span>-</span>
+        <input type="text" id="year-input-max" class="year-input" maxlength="4">
+    </div>
 
       <!-- Region Filter -->
       <label for="region">Region:</label>

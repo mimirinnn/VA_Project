@@ -2,19 +2,18 @@ import { updateFilters, getFilters, resetFilters } from '../../utils/stateManage
 
 const MAX_SELECTION = 5 // Ліміт вибору фільтрів
 
-// Функція перевірки ліміту вибору
+// **Функція перевірки ліміту вибору**
 function checkSelectionLimit (container) {
   if (!container) return
   const checkboxes = container.querySelectorAll('input[type=checkbox]')
   const selectedCheckboxes = container.querySelectorAll('input[type=checkbox]:checked')
 
-  // Якщо вибрано `MAX_SELECTION`, блокуємо інші чекбокси
   checkboxes.forEach(checkbox => {
     checkbox.disabled = selectedCheckboxes.length >= MAX_SELECTION && !checkbox.checked
   })
 }
 
-// Функція оновлення доступності фільтрів
+// **Функція оновлення доступності фільтрів**
 export function toggleFilterAvailability (selectedCategory) {
   const platformContainer = document.getElementById('platforms')
   const genreContainer = document.getElementById('genres')
@@ -33,12 +32,11 @@ export function toggleFilterAvailability (selectedCategory) {
     genreContainer.querySelectorAll('input[type=checkbox]').forEach(input => input.disabled = false)
   }
 
-  // Перевіряємо, щоб зайві фільтри залишалися вимкненими навіть після перемикання
   checkSelectionLimit(platformContainer)
   checkSelectionLimit(genreContainer)
 }
 
-// Функція створення чекбоксів для платформ та жанрів
+// **Функція створення чекбоксів для платформ та жанрів**
 function populateCheckboxes (containerId, filterKey, options, topOptions) {
   const container = document.getElementById(containerId)
   if (!container) {
@@ -46,7 +44,7 @@ function populateCheckboxes (containerId, filterKey, options, topOptions) {
     return
   }
 
-  container.innerHTML = '' // Очищаємо перед заповненням
+  container.innerHTML = ''
 
   let row = document.createElement('div')
   row.classList.add('checkbox-row')
@@ -79,7 +77,7 @@ function populateCheckboxes (containerId, filterKey, options, topOptions) {
   checkSelectionLimit(container)
 }
 
-// Функція створення повзунків років
+// **Функція створення повзунків років із текстовими полями**
 function createYearSlider () {
   const filters = getFilters()
   const yearMin = filters.year.min
@@ -87,7 +85,8 @@ function createYearSlider () {
 
   const sliderMin = document.getElementById('year-slider-min')
   const sliderMax = document.getElementById('year-slider-max')
-  const yearRange = document.getElementById('year-range')
+  const inputMin = document.getElementById('year-input-min')
+  const inputMax = document.getElementById('year-input-max')
 
   sliderMin.min = yearMin
   sliderMin.max = yearMax
@@ -97,22 +96,82 @@ function createYearSlider () {
   sliderMax.max = yearMax
   sliderMax.value = yearMax
 
-  function updateYearValues () {
-    const minYear = Math.min(parseInt(sliderMin.value), parseInt(sliderMax.value))
-    const maxYear = Math.max(parseInt(sliderMin.value), parseInt(sliderMax.value))
+  inputMin.value = yearMin
+  inputMax.value = yearMax
 
-    yearRange.textContent = `${minYear} - ${maxYear}`
+  function updateYearValues () {
+    let minYear = Math.min(parseInt(sliderMin.value), parseInt(sliderMax.value))
+    let maxYear = Math.max(parseInt(sliderMin.value), parseInt(sliderMax.value))
+
+    if (minYear === maxYear) {
+      if (maxYear < yearMax) {
+        maxYear += 1
+      } else {
+        minYear -= 1
+      }
+    }
+
+    sliderMin.value = minYear
+    sliderMax.value = maxYear
+    inputMin.value = minYear
+    inputMax.value = maxYear
+
     updateFilters({ year: { min: minYear, max: maxYear } })
+  }
+
+  function validateAndApplyInput (input, isMin) {
+    let year = parseInt(input.value)
+
+    if (isNaN(year)) {
+      year = isMin ? yearMin : yearMax
+    }
+
+    if (isMin) {
+      if (year < yearMin) year = yearMin
+      if (year >= parseInt(inputMax.value)) year = Math.max(yearMin, parseInt(inputMax.value) - 1)
+    } else {
+      if (year > yearMax) year = yearMax
+      if (year <= parseInt(inputMin.value)) year = Math.min(yearMax, parseInt(inputMin.value) + 1)
+    }
+
+    input.value = year
+
+    sliderMin.value = parseInt(inputMin.value)
+    sliderMax.value = parseInt(inputMax.value)
+
+    updateFilters({ year: { min: parseInt(inputMin.value), max: parseInt(inputMax.value) } })
   }
 
   sliderMin.addEventListener('input', updateYearValues)
   sliderMax.addEventListener('input', updateYearValues)
+
+  inputMin.addEventListener('change', () => validateAndApplyInput(inputMin, true))
+  inputMax.addEventListener('change', () => validateAndApplyInput(inputMax, false))
+
+  inputMin.addEventListener('blur', () => validateAndApplyInput(inputMin, true))
+  inputMax.addEventListener('blur', () => validateAndApplyInput(inputMax, false))
 }
 
-// Функція скидання всіх фільтрів
+// **Функція скидання всіх фільтрів**
 function resetAllFilters () {
   resetFilters()
-  createYearSlider()
+
+  const filters = getFilters()
+  const yearMin = filters.year.min
+  const yearMax = filters.year.max
+
+  const sliderMin = document.getElementById('year-slider-min')
+  const sliderMax = document.getElementById('year-slider-max')
+  const inputMin = document.getElementById('year-input-min')
+  const inputMax = document.getElementById('year-input-max')
+
+  sliderMin.value = yearMin
+  sliderMax.value = yearMax
+  inputMin.value = yearMin
+  inputMax.value = yearMax
+
+  updateFilters({ year: { min: yearMin, max: yearMax } })
+
   document.getElementById('region').value = 'all'
   document.querySelectorAll('.checkbox-container input[type=checkbox]').forEach(checkbox => {
     checkbox.checked = false
@@ -120,13 +179,12 @@ function resetAllFilters () {
   })
 }
 
-// Ініціалізація фільтрів
+// **Ініціалізація фільтрів**
 export function initFilters (uniquePlatforms, uniqueGenres, topPlatforms, topGenres) {
   createYearSlider()
   populateCheckboxes('platforms', 'platform', uniquePlatforms, topPlatforms)
   populateCheckboxes('genres', 'genre', uniqueGenres, topGenres)
   document.getElementById('reset').addEventListener('click', resetAllFilters)
 
-  // Блокуємо неправильні чекбокси на старті
   toggleFilterAvailability('Genre')
 }
