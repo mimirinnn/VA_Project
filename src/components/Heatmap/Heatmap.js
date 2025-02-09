@@ -70,9 +70,11 @@ export function renderHeatmap () {
     .style('fill', d => colorScale(d.value))
     .style('stroke', '#fff')
     .on('mouseover', function (event, d) {
+      const trend = computeTrend(d.genre, d.region, data)
+      const trendSymbol = trend > 0 ? '📈' : trend < 0 ? '📉' : '➡️'
+      
       tooltip.style('visibility', 'visible')
-        .html(`<strong>${d.genre}</strong><br>${d.region}: ${d.value.toFixed(2)}M`)
-
+        .html(`<strong>${d.genre}</strong><br>${d.region}: ${d.value.toFixed(2)}M ${trendSymbol}`)
       d3.select(this)
         .style('stroke', 'black')
         .style('stroke-width', 2)
@@ -88,6 +90,10 @@ export function renderHeatmap () {
         .style('stroke', '#fff')
         .style('stroke-width', 1)
     })
+
+
+
+    
     .on('click', function (event, d) {
       // **Обчислення відсоткової частки продажів**
       const totalSales = d3.sum(salesData.flatMap(d => d.sales.map(s => s.value)))
@@ -274,7 +280,27 @@ barChart.append('text')
 
 }
 }
+function computeTrend(genre, region, data) {
+  const yearlySales = d3.rollup(
+    data.filter(d => d.Genre === genre),
+    v => d3.sum(v, d => d[region]),
+    d => d.Year
+  )
 
+  const sortedYears = Array.from(yearlySales.keys()).sort((a, b) => a - b)
+  const values = sortedYears.map(year => ({ x: year, y: yearlySales.get(year) || 0 }))
+
+  if (values.length < 2) return 0
+
+  const n = values.length
+  const sumX = d3.sum(values, d => d.x)
+  const sumY = d3.sum(values, d => d.y)
+  const sumXY = d3.sum(values, d => d.x * d.y)
+  const sumX2 = d3.sum(values, d => d.x * d.x)
+
+  const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX)
+  return slope
+}
 document.addEventListener('timeRangeUpdated', () => {
   console.log('Heatmap is updating due to time range change')
   renderHeatmap()
