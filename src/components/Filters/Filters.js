@@ -2,6 +2,15 @@ import { updateFilters, getFilters, resetFilters } from '../../utils/stateManage
 
 const MAX_SELECTION = 5 // Ліміт вибору фільтрів
 
+// **Групи платформ**
+const platformCategories = {
+  Nintendo: ['3DS', 'DS', 'GB', 'GBA', 'GBC', 'GC', 'N64', 'NES', 'NS', 'Wii', 'WiiU', 'SNES'],
+  PlayStation: ['PS', 'PS2', 'PS3', 'PS4', 'PS5', 'PSN', 'PSP', 'PSV'],
+  Xbox: ['X360', 'XB', 'XOne'],
+  Sega: ['DC', 'GEN', 'SAT', 'SCD'],
+  PC: ['PC']
+}
+
 // **Функція перевірки ліміту вибору**
 function checkSelectionLimit (container) {
   if (!container) return
@@ -46,27 +55,62 @@ function populateCheckboxes (containerId, filterKey, options, topOptions) {
 
   container.innerHTML = ''
 
-  let row = document.createElement('div')
-  row.classList.add('checkbox-row')
+  // **Якщо фільтр - платформи, додаємо категорії**
+  if (filterKey === 'platform') {
+    Object.entries(platformCategories).forEach(([category, platforms]) => {
+      const categoryLabel = document.createElement('div')
+      categoryLabel.classList.add('checkbox-category')
+      categoryLabel.innerText = category
+      container.appendChild(categoryLabel)
 
-  options.forEach((option, index) => {
-    const label = document.createElement('label')
-    label.classList.add('checkbox-item')
-
-    label.innerHTML = `<input type="checkbox" value="${option}" ${topOptions.includes(option) ? 'checked' : ''}> ${option}`
-    row.appendChild(label)
-
-    if ((index + 1) % 5 === 0) {
-      container.appendChild(row)
-      row = document.createElement('div')
+      let row = document.createElement('div')
       row.classList.add('checkbox-row')
-    }
-  })
 
-  if (row.children.length > 0) {
-    container.appendChild(row)
+      platforms.forEach((platform, index) => {
+        if (!options.includes(platform)) return // Пропускаємо платформи, яких немає у датасеті
+
+        const label = document.createElement('label')
+        label.classList.add('checkbox-item')
+
+        label.innerHTML = `<input type="checkbox" value="${platform}" ${topOptions.includes(platform) ? 'checked' : ''}> ${platform}`
+        row.appendChild(label)
+
+        if ((index + 1) % 5 === 0) {
+          container.appendChild(row)
+          row = document.createElement('div')
+          row.classList.add('checkbox-row')
+        }
+      })
+
+      if (row.children.length > 0) {
+        container.appendChild(row)
+      }
+    })
+  } else {
+    // **Якщо фільтр - жанри, просто створюємо список**
+    let row = document.createElement('div')
+    row.classList.add('checkbox-row')
+
+    options.forEach((option, index) => {
+      const label = document.createElement('label')
+      label.classList.add('checkbox-item')
+
+      label.innerHTML = `<input type="checkbox" value="${option}" ${topOptions.includes(option) ? 'checked' : ''}> ${option}`
+      row.appendChild(label)
+
+      if ((index + 1) % 5 === 0) {
+        container.appendChild(row)
+        row = document.createElement('div')
+        row.classList.add('checkbox-row')
+      }
+    })
+
+    if (row.children.length > 0) {
+      container.appendChild(row)
+    }
   }
 
+  // **Оновлення фільтрів при зміні чекбоксів**
   container.addEventListener('change', () => {
     const selectedValues = Array.from(container.querySelectorAll('input[type=checkbox]:checked'))
       .map(checkbox => checkbox.value)
