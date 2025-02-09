@@ -34,6 +34,7 @@ async function startApp () {
 
   initializeFilters(data)
   initFilters(uniquePlatforms, uniqueGenres, topPlatforms, topGenres)
+  updateFilters({ platform: topPlatforms, genre: topGenres })
 
   let selectedCategory = 'Genre'
 
