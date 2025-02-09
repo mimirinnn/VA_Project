@@ -48,7 +48,7 @@ export function renderHeatmap() {
         .style('pointer-events', 'none');
 
     svg.selectAll()
-        .data(salesData.flatMap(d => d.sales.map(s => ({ genre: d.genre, ...s }))))
+        .data(salesData.flatMap(d => d.sales.map(s => ({ genre: d.genre, ...s })) ))
         .enter()
         .append('rect')
         .attr('x', d => xScale(d.region))
@@ -60,7 +60,7 @@ export function renderHeatmap() {
         .on('mouseover', function (event, d) {
             tooltip.style('visibility', 'visible')
                 .html(`<strong>${d.genre}</strong><br>${d.region}: ${d.value.toFixed(2)}M`);
-            
+
             d3.select(this)
                 .style('stroke', 'black')
                 .style('stroke-width', 2);
@@ -71,7 +71,7 @@ export function renderHeatmap() {
         })
         .on('mouseout', function () {
             tooltip.style('visibility', 'hidden');
-            
+
             d3.select(this)
                 .style('stroke', '#fff')
                 .style('stroke-width', 1);
@@ -143,7 +143,15 @@ export function renderHeatmap() {
     legendSvg.append("rect")
         .attr("width", legendWidth)
         .attr("height", legendHeight)
-        .style("fill", "url(#legend-gradient)");
+        .style("fill", "url(#legend-gradient)")
+        .style('cursor', 'pointer') // Додавання курсору для інтерактивності
+        .on('click', function (event) {
+            const yPos = event.offsetY;
+            const clickedValue = legendScale.invert(yPos);
+            
+            // Викликаємо функцію для фільтрації теплової карти
+            filterHeatmap(clickedValue); 
+        });
 
     legendSvg.append("text")
         .attr("x", 0)
@@ -152,4 +160,11 @@ export function renderHeatmap() {
         .style("font-size", "12px")
         .text("Sales (M)");
 
+    // Функція фільтрації теплової карти
+    function filterHeatmap(threshold) {
+        svg.selectAll('rect')
+            .style('opacity', d => d && d.value >= threshold ? 1 : 0.4) // Перевірка на наявність значення
+           // .style('stroke', d => d && d.value >= threshold ? '' : '')
+            .style('stroke-width', d => d && d.value >= threshold ? 2 : 1);
+    }
 }
