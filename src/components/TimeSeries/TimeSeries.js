@@ -7,14 +7,17 @@ let selectedRange = null
 function aggregateData (data, category) {
   const aggregated = d3.rollups(
     data,
-    v => d3.sum(v, d => d.TotalSales),
+    v => ({
+      totalSales: d3.sum(v, d => d.TotalSales),
+      games: v.map(d => d.Name) // Додаємо назви ігор
+    }),
     d => d3.timeYear(new Date(d.Year, 0, 1)), // Групування по роках як датах
     d => d[category] // Групування по обраній категорії (Genre або Platform)
   )
 
   return aggregated.map(([year, categories]) => ({
     year,
-    categories: categories.map(([category, sales]) => ({ category, sales }))
+    categories: categories.map(([category, { totalSales, games }]) => ({ category, totalSales, games }))
   })).sort((a, b) => a.year - b.year) // Сортуємо за роками
 }
 
@@ -39,7 +42,7 @@ export function renderTimeSeries (data, selectedCategory = 'Genre') {
   const categoryTotals = {}
   aggregatedData.forEach(d => {
     d.categories.forEach(c => {
-      categoryTotals[c.category] = (categoryTotals[c.category] || 0) + c.sales
+      categoryTotals[c.category] = (categoryTotals[c.category] || 0) + c.totalSales
     })
   })
 
@@ -60,7 +63,7 @@ export function renderTimeSeries (data, selectedCategory = 'Genre') {
     .range([0, width])
 
   const y = d3.scaleLinear()
-    .domain([0, d3.max(filteredData.flatMap(d => d.categories.map(c => c.sales)))])
+    .domain([0, d3.max(filteredData.flatMap(d => d.categories.map(c => c.totalSales)))])
     .nice()
     .range([height, 0])
 
@@ -75,7 +78,6 @@ export function renderTimeSeries (data, selectedCategory = 'Genre') {
     .attr('transform', `translate(0,${height})`)
     .call(d3.axisBottom(x).ticks(tickInterval).tickFormat(d3.timeFormat('%Y')))
 
-  // **Обертання підписів осі X**
   xAxis.selectAll('text')
     .attr('transform', 'rotate(-30)')
     .style('text-anchor', 'end')
@@ -83,11 +85,32 @@ export function renderTimeSeries (data, selectedCategory = 'Genre') {
   svg.append('g')
     .call(d3.axisLeft(y))
 
+  // **Додаємо tooltip**
+  const tooltip = d3.select('#root')
+    .append('div')
+    .attr('class', 'tooltip')
+    .style('opacity', 0)
+    .style('position', 'absolute')
+    .style('background', 'rgba(255, 255, 255, 0.9)')
+    .style('border', '1px solid #ccc')
+    .style('padding', '10px')
+    .style('border-radius', '5px')
+    .style('box-shadow', '0px 0px 5px rgba(0, 0, 0, 0.2)')
+    .style('pointer-events', 'none')
+
+  // **Додаємо вертикальну лінію для наведення**
+  const hoverLine = svg.append('line')
+    .attr('stroke', '#aaa')
+    .attr('stroke-width', 1.5)
+    .attr('stroke-dasharray', '5,5')
+    .style('opacity', 0)
+
   // **Малюємо лінії**
   topCategories.forEach(category => {
     const categoryData = filteredData.map(d => ({
       year: d.year,
-      sales: d.categories.find(c => c.category === category)?.sales || 0
+      sales: d.categories.find(c => c.category === category)?.totalSales || 0,
+      games: d.categories.find(c => c.category === category)?.games || []
     }))
 
     const line = d3.line()
@@ -100,7 +123,101 @@ export function renderTimeSeries (data, selectedCategory = 'Genre') {
       .attr('stroke', colorScale(category))
       .attr('stroke-width', 2)
       .attr('d', line)
+
+    // **Додаємо точки**
+    svg.selectAll(`.dot-${category}`)
+      .data(categoryData)
+      .enter()
+      .append('circle')
+      .attr('class', `dot-${category}`)
+      .attr('cx', d => x(d.year))
+      .attr('cy', d => y(d.sales))
+      .attr('r', 3) // **Зменшений розмір точок**
+      .attr('fill', colorScale(category))
+      .style('opacity', 0) // **Точки видно лише при наведенні**
   })
+
+  // **Слухаємо рух миші**
+  svg.append('rect')
+    .attr('width', width)
+    .attr('height', height)
+    .style('opacity', 0)
+    .on('mousemove', function (event) {
+      const [mouseX] = d3.pointer(event)
+      const hoveredYear = x.invert(mouseX)
+
+      hoverLine
+        .attr('x1', mouseX)
+        .attr('x2', mouseX)
+        .attr('y1', 0)
+        .attr('y2', height)
+        .style('opacity', 1)
+
+      const hoveredData = filteredData.find(d => Math.abs(d.year - hoveredYear) < 365 * 24 * 60 * 60 * 1000)
+
+      // **Відображаємо точки**
+      svg.selectAll('.tooltip-dot').remove() // Видаляємо попередні точки
+
+      hoveredData.categories.forEach(categoryData => {
+        svg.append('circle')
+          .attr('class', 'tooltip-dot')
+          .attr('cx', x(hoveredData.year))
+          .attr('cy', y(categoryData.totalSales))
+          .attr('r', 4) // Розмір точки
+          .attr('fill', colorScale(categoryData.category))
+          .attr('stroke', 'white')
+          .attr('stroke-width', 1)
+      })
+
+      if (hoveredData) {
+        tooltip.transition().duration(200).style('opacity', 1)
+        tooltip.html(`
+          <strong>Year: ${d3.timeFormat('%Y')(hoveredData.year)}</strong><br>
+          ${hoveredData.categories.map(c =>
+            `<div style="color: ${colorScale(c.category)}">
+              <strong>${c.category}</strong>: ${c.totalSales.toLocaleString()}<br>
+              Games: ${c.games.slice(0, 3).join(', ')}...
+            </div>`
+          ).join('')}
+        `)
+
+        // **Затримуємо оновлення позиції tooltip, щоб отримати правильний розмір**
+        setTimeout(() => {
+          const tooltipWidth = tooltip.node().getBoundingClientRect().width
+          const pageWidth = window.innerWidth
+
+          // **Переміщуємо tooltip вліво, якщо він виходить за межі екрану**
+          let tooltipX = event.pageX + 10
+          if (event.pageX + tooltipWidth > pageWidth - 20) {
+            tooltipX = event.pageX - tooltipWidth - 10
+          }
+
+          tooltip.style('left', `${tooltipX}px`)
+            .style('top', `${event.pageY - 30}px`)
+        }, 10) // Затримка в 10 мс, щоб браузер зміг порахувати розмір
+      }
+    })
+    .on('mouseout', function () {
+      tooltip.transition().duration(200).style('opacity', 0)
+      hoverLine.style('opacity', 0)
+
+      // Видалення точок при виході курсора з графіка
+      svg.selectAll('.tooltip-dot').remove()
+    })
+
+  // **Слайсинг (переміщено вниз)**
+  const brush = d3.brushX()
+    .extent([[0, height + 20], [width, height + 40]]) // **Переміщено під графік**
+    .on('end', function ({ selection }) {
+      if (!selection) return
+      const [x0, x1] = selection.map(x.invert)
+      selectedRange = [x0, x1]
+      console.log(`Selected range: ${d3.timeFormat('%Y')(x0)} - ${d3.timeFormat('%Y')(x1)}`)
+    })
+
+  svg.append('g')
+    .attr('class', 'brush')
+    .call(brush)
 
   // **Додаємо підписи до осей**
   svg.append('text')
@@ -117,27 +234,6 @@ export function renderTimeSeries (data, selectedCategory = 'Genre') {
     .attr('text-anchor', 'middle')
     .style('font-size', '14px')
     .text('Total Sales (Millions)')
-
-  // **Додаємо слайсинг без зуму**
-  const brush = d3.brushX()
-    .extent([[0, 0], [width, height]])
-    .on('end', function ({ selection }) {
-      if (!selection) return
-
-      // **Конвертуємо координати у роки**
-      const [x0, x1] = selection.map(x.invert)
-      selectedRange = [x0, x1]
-
-      console.log(`Selected range: ${d3.timeFormat('%Y')(x0)} - ${d3.timeFormat('%Y')(x1)}`)
-
-      // **Фільтруємо дані у слайсі та виводимо у консоль**
-      const selectedGames = data.filter(d => d.Year >= x0.getFullYear() && d.Year <= x1.getFullYear())
-      console.log('Selected games:', selectedGames)
-    })
-
-  svg.append('g')
-    .attr('class', 'brush')
-    .call(brush)
 
   // **Додаємо легенду**
   const legend = svg.append('g')
@@ -159,14 +255,6 @@ export function renderTimeSeries (data, selectedCategory = 'Genre') {
       .style('font-size', '12px')
       .text(category)
   })
-
-  // **Додаємо заголовок**
-  svg.append('text')
-    .attr('x', width / 2)
-    .attr('y', -20)
-    .attr('text-anchor', 'middle')
-    .style('font-size', '16px')
-    .style('font-weight', 'bold')
 }
 
 // **Експортуємо функцію**
