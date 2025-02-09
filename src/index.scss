@@ -14,8 +14,11 @@ body {
 }
 
 #pca-chart {
-  overflow: visible; // Дозволяє легенді виходити за межі контейнера
+  width: 95%; /* Використовуємо всю ширину контейнера */
+  height: 100%;
+  overflow: visible;
 }
+
 
 #root {
   width: 90%;
@@ -27,7 +30,7 @@ body {
   grid-template-areas:
     "filters time-series time-series"
     "filters heatmap heatmap"
-    "filters t-sne t-sne";
+    "filters pca pca";
   gap: 20px;
   background: white;
   padding: 10px;
@@ -248,3 +251,16 @@ input:checked + .slider:before {
   border-radius: 4px;
   font-size: 14px;
 }
+
+.pca {
+  grid-area: pca;
+  width: 95%;
+  height: 450px;
+  display: flex;
+  justify-content: flex-start; /* Вирівнює графік ліворуч */
+  align-items: center;
+  overflow: hidden;
+  padding-left: 20px; /* Додаємо невеликий відступ для покращення вигляду */
+}
+
+
