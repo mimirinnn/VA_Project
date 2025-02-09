@@ -10,15 +10,26 @@ const state = {
 }
 
 // Ініціалізація фільтрів на основі датасету
-export function initializeFilters (data) {
+export function initializeFilters (data, initialYearRange) {
   const years = data.map(d => d.Year).filter(y => y !== null)
-  state.filters.year.min = Math.min(...years)
-  state.filters.year.max = Math.max(...years)
+
+  const minYear = Math.max(Math.min(...years), initialYearRange.min)
+  const maxYear = Math.min(Math.max(...years), initialYearRange.max)
+
+  state.filters.year = { min: minYear, max: maxYear }
+
+  console.log(`Initialized year range: ${state.filters.year.min} - ${state.filters.year.max}`)
+
   state.filters.platform = [...new Set(data.map(d => d.Platform))]
   state.filters.genre = [...new Set(data.map(d => d.Genre))]
 
   state.originalData = data
   state.filteredData = [...data]
+
+  // **Примусово оновлюємо фільтри після ініціалізації**
+  updateFilters({ year: { min: minYear, max: maxYear } })
+
+  console.log(`Initialized year range: ${state.filters.year.min} - ${state.filters.year.max}`)
 }
 
 let selectedTimeRange = null
@@ -32,9 +43,10 @@ export function getTimeRange () {
   return selectedTimeRange
 }
 
-// Оновлення стану фільтрів
 export function updateFilters (newFilters) {
+  console.log('Before updateFilters:', state.filters)
   state.filters = { ...state.filters, ...newFilters }
+  console.log('After updateFilters:', state.filters)
   applyFilters()
 }
 
@@ -64,7 +76,13 @@ export function resetFilters () {
 
 // Отримати відфільтровані дані
 export function getFilteredData () {
-  return state.filteredData
+  console.log('getFilteredData - Current filters:', state.filters)
+
+  return state.originalData.filter(d =>
+    d.Year >= state.filters.year.min && d.Year <= state.filters.year.max &&
+    (state.filters.genre.length === 0 || state.filters.genre.includes(d.Genre)) &&
+    (state.filters.region === 'all' || d[`${state.filters.region}_Sales`] > 0)
+  )
 }
 
 // Отримати поточні значення фільтрів

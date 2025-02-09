@@ -1,5 +1,5 @@
 import { getProcessedData } from './data/preprocess'
-import { initializeFilters, getFilteredData, updateFilters } from './utils/stateManager'
+import { initializeFilters, getFilteredData, updateFilters, getFilters } from './utils/stateManager'
 import { initFilters, toggleFilterAvailability } from './components/Filters/Filters'
 import { updateTimeSeries } from './components/TimeSeries'
 import { updateHeatmap } from './components/Heatmap'
@@ -36,8 +36,14 @@ async function startApp () {
 
   initializeFilters(data, INITIAL_YEAR_RANGE)
   initFilters(uniquePlatforms, uniqueGenres, topPlatforms, topGenres)
-  updateFilters({ year: INITIAL_YEAR_RANGE }) // Спочатку встановлюємо діапазон років
-  updateFilters({ platform: topPlatforms, genre: topGenres }) // Потім додаємо топові платформи та жанри
+
+  console.log('Applying top filters:', topPlatforms, topGenres)
+  updateFilters({ platform: topPlatforms, genre: topGenres })
+  console.log('Updated filters after top selection:', getFilters())
+
+  updateFilters({ year: getFilters().year }) // Тепер оновлюємо рік на правильне значення
+
+  console.log(`Applied year range: ${getFilters().year.min} - ${getFilters().year.max}`)
 
   let selectedCategory = 'Genre'
 

@@ -1,5 +1,5 @@
 import * as d3 from 'd3'
-import { getFilteredData, getTimeRange } from '../../utils/stateManager.js'
+import { getFilteredData, getTimeRange, getFilters } from '../../utils/stateManager.js'
 
 // Функція для створення теплової карти
 export function renderHeatmap () {
@@ -15,7 +15,12 @@ export function renderHeatmap () {
   }
 
   const regions = ['NA_Sales', 'EU_Sales', 'JP_Sales', 'Other_Sales']
-  const genres = [...new Set(data.map(d => d.Genre))].sort()
+  const activeFilters = getFilters()
+  const genres = activeFilters.genre.length > 0
+    ? activeFilters.genre
+    : [...new Set(data.map(d => d.Genre))].sort()
+
+  console.log('Heatmap received filters:', getFilters())
 
   const salesData = genres.map(genre => ({
     genre,

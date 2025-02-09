@@ -29,6 +29,7 @@ function aggregateData (data, category) {
 
 // **Головна функція рендерингу графіка**
 export function renderTimeSeries (data, selectedCategory = 'Genre') {
+  console.log('TimeSeries received data:', d3.min(data, d => d.Year), '-', d3.max(data, d => d.Year))
   d3.select('#time-series-chart').selectAll('*').remove()
 
   const margin = { top: 50, right: 170, bottom: 70, left: 80 }
