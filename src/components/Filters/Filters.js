@@ -125,7 +125,7 @@ function populateCheckboxes (containerId, filterKey, options, topOptions) {
 function createYearSlider () {
   const filters = getFilters()
   const yearMin = filters.year.min
-  const yearMax = filters.year.max
+  const yearMax = Math.min(filters.year.max, 2020) // Максимальний рік обмежено до 2020
 
   const sliderMin = document.getElementById('year-slider-min')
   const sliderMax = document.getElementById('year-slider-max')
@@ -147,6 +147,7 @@ function createYearSlider () {
     let minYear = Math.min(parseInt(sliderMin.value), parseInt(sliderMax.value))
     let maxYear = Math.max(parseInt(sliderMin.value), parseInt(sliderMax.value))
 
+    // Гарантуємо, що minYear < maxYear
     if (minYear === maxYear) {
       if (maxYear < yearMax) {
         maxYear += 1
@@ -155,17 +156,20 @@ function createYearSlider () {
       }
     }
 
+    // Оновлюємо значення у слайдерах і текстових полях
     sliderMin.value = minYear
     sliderMax.value = maxYear
     inputMin.value = minYear
     inputMax.value = maxYear
 
+    // Оновлення фільтрів
     updateFilters({ year: { min: minYear, max: maxYear } })
   }
 
   function validateAndApplyInput (input, isMin) {
     let year = parseInt(input.value)
 
+    // Якщо введено некоректне значення, повертаємо до дозволеного мін/макс значення
     if (isNaN(year)) {
       year = isMin ? yearMin : yearMax
     }
@@ -180,12 +184,15 @@ function createYearSlider () {
 
     input.value = year
 
+    // Оновлюємо слайдери відповідно до введеного значення
     sliderMin.value = parseInt(inputMin.value)
     sliderMax.value = parseInt(inputMax.value)
 
+    // Оновлення фільтрів
     updateFilters({ year: { min: parseInt(inputMin.value), max: parseInt(inputMax.value) } })
   }
 
+  // Додаємо обробники подій для оновлення значень
   sliderMin.addEventListener('input', updateYearValues)
   sliderMax.addEventListener('input', updateYearValues)
 
@@ -202,7 +209,7 @@ function resetAllFilters () {
 
   const filters = getFilters()
   const yearMin = filters.year.min
-  const yearMax = filters.year.max
+  const yearMax = Math.min(filters.year.max, 2020)
 
   const sliderMin = document.getElementById('year-slider-min')
   const sliderMax = document.getElementById('year-slider-max')

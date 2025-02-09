@@ -6,6 +6,8 @@ import { updateHeatmap } from './components/Heatmap'
 import './index.scss'
 import { updatePCA } from './components/PCA'
 
+const INITIAL_YEAR_RANGE = { min: 1985, max: 2020 }
+
 async function startApp () {
   const data = await getProcessedData()
 
@@ -32,9 +34,10 @@ async function startApp () {
     .slice(0, 5)
     .map(d => d[0])
 
-  initializeFilters(data)
+  initializeFilters(data, INITIAL_YEAR_RANGE)
   initFilters(uniquePlatforms, uniqueGenres, topPlatforms, topGenres)
-  updateFilters({ platform: topPlatforms, genre: topGenres })
+  updateFilters({ year: INITIAL_YEAR_RANGE }) // Спочатку встановлюємо діапазон років
+  updateFilters({ platform: topPlatforms, genre: topGenres }) // Потім додаємо топові платформи та жанри
 
   let selectedCategory = 'Genre'
 
