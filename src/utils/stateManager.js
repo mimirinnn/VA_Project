@@ -21,6 +21,17 @@ export function initializeFilters (data) {
   state.filteredData = [...data]
 }
 
+let selectedTimeRange = null
+
+export function updateTimeRange (range) {
+  selectedTimeRange = range
+  document.dispatchEvent(new CustomEvent('timeRangeUpdated', { detail: range }))
+}
+
+export function getTimeRange () {
+  return selectedTimeRange
+}
+
 // Оновлення стану фільтрів
 export function updateFilters (newFilters) {
   state.filters = { ...state.filters, ...newFilters }

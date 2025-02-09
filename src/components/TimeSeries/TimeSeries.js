@@ -1,4 +1,5 @@
 import * as d3 from 'd3'
+import { updateTimeRange } from '../../utils/stateManager'
 
 // **Змінні для збереження вибраного діапазону**
 let selectedRange = null
@@ -214,12 +215,16 @@ export function renderTimeSeries (data, selectedCategory = 'Genre') {
 
   // **Слайсинг (переміщено вниз)**
   const brush = d3.brushX()
-    .extent([[0, height + 20], [width, height + 40]]) // **Переміщено під графік**
+    .extent([[0, height + 20], [width, height + 40]])
     .on('end', function ({ selection }) {
       if (!selection) return
       const [x0, x1] = selection.map(x.invert)
       selectedRange = [x0, x1]
+
       console.log(`Selected range: ${d3.timeFormat('%Y')(x0)} - ${d3.timeFormat('%Y')(x1)}`)
+
+      // **Оновлення глобального стану**
+      updateTimeRange([x0.getFullYear(), x1.getFullYear()])
     })
 
   svg.append('g')
