@@ -158,45 +158,51 @@ export function renderTimeSeries (data, selectedCategory = 'Genre') {
         .attr('y2', height)
         .style('opacity', 1)
 
-      const hoveredData = filteredData.find(d => Math.abs(d.year - hoveredYear) < 365 * 24 * 60 * 60 * 1000)
+      const hoveredData = filteredData.find(d =>
+        Math.abs(d.year.getFullYear() - hoveredYear.getFullYear()) <= 1
+      )
+
+      // **Перевірка, чи є дані**
+      if (!hoveredData || !hoveredData.categories || hoveredData.categories.length === 0) {
+        tooltip.transition().duration(200).style('opacity', 0)
+        return
+      }
 
       // **Відображаємо точки**
-      svg.selectAll('.tooltip-dot').remove() // Видаляємо попередні точки
+      svg.selectAll('.tooltip-dot').remove()
 
       hoveredData.categories.forEach(categoryData => {
         svg.append('circle')
           .attr('class', 'tooltip-dot')
           .attr('cx', x(hoveredData.year))
           .attr('cy', y(categoryData.totalSales))
-          .attr('r', 4) // Розмір точки
+          .attr('r', 4)
           .attr('fill', colorScale(categoryData.category))
           .attr('stroke', 'white')
           .attr('stroke-width', 1)
       })
 
-      if (hoveredData) {
-        tooltip.transition().duration(200).style('opacity', 1)
-        tooltip.html(`
-          <strong>Year: ${d3.timeFormat('%Y')(hoveredData.year)}</strong><br>
-          ${hoveredData.categories.map(c =>
-            `<div style="color: ${colorScale(c.category)}">
-              <strong>${c.category}</strong>: ${c.totalSales.toLocaleString()}
-              ${showGameNames ? `<br>Games: ${c.games.slice(0, 3).join(', ')}...` : ''}
-            </div>`
-          ).join('')}
-        `)
+      tooltip.transition().duration(200).style('opacity', 1)
+      tooltip.html(`
+        <strong>Year: ${d3.timeFormat('%Y')(hoveredData.year)}</strong><br>
+        ${hoveredData.categories.map(c =>
+          `<div style="color: ${colorScale(c.category)}">
+            <strong>${c.category}</strong>: ${c.totalSales.toLocaleString()}
+            ${showGameNames ? `<br>Games: ${c.games.slice(0, 3).join(', ')}...` : ''}
+          </div>`
+        ).join('')}
+      `)
 
-        // Визначаємо позицію tooltip
-        const tooltipWidth = tooltip.node().getBoundingClientRect().width
-        const pageWidth = window.innerWidth
-        let tooltipX = event.pageX + 10
-        if (event.pageX + tooltipWidth > pageWidth) {
-          tooltipX = event.pageX - tooltipWidth - 10
-        }
-
-        tooltip.style('left', `${tooltipX}px`)
-          .style('top', `${event.pageY - 30}px`)
+      // **Позиція tooltip**
+      const tooltipWidth = tooltip.node().getBoundingClientRect().width
+      const pageWidth = window.innerWidth
+      let tooltipX = event.pageX + 10
+      if (event.pageX + tooltipWidth > pageWidth) {
+        tooltipX = event.pageX - tooltipWidth - 10
       }
+
+      tooltip.style('left', `${tooltipX}px`)
+        .style('top', `${event.pageY - 30}px`)
     })
     .on('mouseout', function () {
       tooltip.transition().duration(200).style('opacity', 0)
