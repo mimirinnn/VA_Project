@@ -13,6 +13,10 @@ body {
   overflow: visible; // Дозволяє легенді виходити за межі контейнера
 }
 
+#pca-chart {
+  overflow: visible; // Дозволяє легенді виходити за межі контейнера
+}
+
 #root {
   width: 90%;
   height: auto;
