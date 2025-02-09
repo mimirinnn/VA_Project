@@ -195,9 +195,88 @@ export function renderHeatmap () {
       .style('opacity', d => d && d.value >= threshold ? 1 : 0.4)
       .style('stroke-width', d => d && d.value >= threshold ? 2 : 1)
   }
+
+  svg.append('g')
+  .attr('transform', `translate(0,${height})`)
+  .call(d3.axisBottom(xScale))
+  .selectAll('text')
+  .style('cursor', 'pointer')
+  .on('mouseover', function (event, region) {
+    showTopGenres(region, data)
+  })
+  .on('mouseout', function () {
+    d3.select('#top-genres-chart').remove()
+  })
+
+function showTopGenres(region, filteredData) {
+  const totalRegionSales = d3.sum(filteredData, d => d[region])
+  if (totalRegionSales === 0) return
+
+  const topGenres = genres.map(genre => ({
+    genre,
+    value: d3.sum(filteredData.filter(d => d.Genre === genre), d => d[region])
+  }))
+  .sort((a, b) => b.value - a.value)
+  .slice(0, 3)
+
+  d3.select('#top-genres-chart').remove()
+
+  const barChart = svg.append('g')
+    .attr('id', 'top-genres-chart')
+    .attr('transform', `translate(${width-200}, 50)`) // Розташування справа
+
+  const barScale = d3.scaleLinear()
+    .domain([0, d3.max(topGenres, d => d.value)])
+    .range([0, 100])
+
+  // Додаємо білий напівпрозорий фон спочатку
+barChart.append('rect')
+    .attr('x', -150)
+    .attr('y', -40)
+    .attr('width', 400)
+    .attr('height', 130)
+    .style('fill', 'white')
+    .style('opacity', 0.8); // Напівпрозорість
+
+// Додаємо стовпчики
+barChart.selectAll('rect.data-bar')
+    .data(topGenres)
+    .enter()
+    .append('rect')
+    .attr('class', 'data-bar')  // Додаємо клас для відокремлення від фону
+    .attr('x', 0)
+    .attr('y', (d, i) => i * 20)
+    .attr('width', d => barScale(d.value))
+    .attr('height', 15)
+    .attr('fill', 'steelblue');
+
+// Додаємо підписи жанрів
+barChart.selectAll('text.data-label')
+    .data(topGenres)
+    .enter()
+    .append('text')
+    .attr('class', 'data-label')  // Додаємо клас
+    .attr('x', -10)
+    .attr('y', (d, i) => i * 20 + 12)
+    .attr('text-anchor', 'end')
+    .style('font-size', '12px')
+    .text(d => `${d.genre} (${((d.value / totalRegionSales) * 100).toFixed(1)}%)`);
+
+// Додаємо заголовок
+barChart.append('text')
+    .attr('x', 50)
+    .attr('y', -10)
+    .attr('text-anchor', 'middle')
+    .style('font-size', '14px')
+    .style('font-weight', 'bold')
+    .style('fill', 'black')
+    .text(`🔥 Топ-3 жанри у ${region}`);
+
+}
 }
 
 document.addEventListener('timeRangeUpdated', () => {
   console.log('Heatmap is updating due to time range change')
   renderHeatmap()
 })
+
