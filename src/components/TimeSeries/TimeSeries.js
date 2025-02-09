@@ -159,9 +159,11 @@ export function renderTimeSeries (data, selectedCategory = 'Genre') {
         .attr('y2', height)
         .style('opacity', 1)
 
-      const hoveredData = filteredData.find(d =>
-        Math.abs(d.year.getFullYear() - hoveredYear.getFullYear()) <= 1
-      )
+      const hoveredData = filteredData.reduce((closest, d) => {
+        return (!closest || Math.abs(d.year - hoveredYear) < Math.abs(closest.year - hoveredYear))
+          ? d
+          : closest
+      }, null)
 
       // **Перевірка, чи є дані**
       if (!hoveredData || !hoveredData.categories || hoveredData.categories.length === 0) {
