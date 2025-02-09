@@ -18,7 +18,7 @@ export function renderHeatmap() {
         }))
     }));
 
-    const margin = { top: 30, right: 40, bottom: 60, left: 120 };
+    const margin = { top: 30, right: 80, bottom: 60, left: 120 };
     const width = 500 - margin.left - margin.right;
     const height = 400 - margin.top - margin.bottom;
 
@@ -33,7 +33,7 @@ export function renderHeatmap() {
     const yScale = d3.scaleBand().domain(genres).range([height, 0]).padding(0.05);
 
     const maxSales = d3.max(salesData.flatMap(d => d.sales.map(s => s.value)));
-    const colorScale = d3.scaleSequential(d3.interpolateBlues).domain([0, maxSales]);
+    const colorScale = d3.scaleSequential(d3.interpolateViridis).domain([0, maxSales]);
 
     // Додавання tooltip
     const tooltip = d3.select('body')
@@ -104,4 +104,52 @@ export function renderHeatmap() {
         .style('font-size', '16px')
         .style('font-weight', 'bold')
         .text('Regional Sales Heatmap');
+
+    // Додавання легенди
+    const legendHeight = 200;
+    const legendWidth = 20;
+    const legendSvg = svg.append('g')
+        .attr('transform', `translate(${width + 20}, 0)`);
+
+    const legendScale = d3.scaleLinear()
+        .domain([0, maxSales])
+        .range([legendHeight, 0]);
+
+    const legendAxis = d3.axisRight(legendScale)
+        .ticks(5)
+        .tickFormat(d3.format(".2s"));
+
+    legendSvg.append("g")
+        .attr("transform", `translate(${legendWidth}, 0)`)
+        .call(legendAxis);
+
+    const gradient = legendSvg.append("defs")
+        .append("linearGradient")
+        .attr("id", "legend-gradient")
+        .attr("x1", "0%")
+        .attr("y1", "100%")
+        .attr("x2", "0%")
+        .attr("y2", "0%");
+
+    const numStops = 10;
+    const step = 1 / (numStops - 1);
+
+    for (let i = 0; i < numStops; i++) {
+        gradient.append("stop")
+            .attr("offset", `${i * step * 100}%`)
+            .attr("stop-color", colorScale(i * maxSales * step));
+    }
+
+    legendSvg.append("rect")
+        .attr("width", legendWidth)
+        .attr("height", legendHeight)
+        .style("fill", "url(#legend-gradient)");
+
+    legendSvg.append("text")
+        .attr("x", 0)
+        .attr("y", -10)
+        .attr("text-anchor", "middle")
+        .style("font-size", "12px")
+        .text("Sales (M)");
+
 }
