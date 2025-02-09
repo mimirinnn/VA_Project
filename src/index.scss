@@ -5,7 +5,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  height: auto;
   
 }
 
@@ -22,7 +22,8 @@ body {
   grid-template-rows: auto auto;
   grid-template-areas:
     "filters time-series time-series"
-    "filters heatmap t-sne";
+    "filters heatmap heatmap"
+    "filters t-sne t-sne";
   gap: 20px;
   background: white;
   padding: 10px;
