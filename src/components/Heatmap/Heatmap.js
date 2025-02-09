@@ -25,7 +25,7 @@ export function renderHeatmap () {
     }))
   }))
 
-  const margin = { top: 30, right: 80, bottom: 60, left: 120 }
+  const margin = { top: 30, right: 80, bottom: 80, left: 120 }
   const width = 500 - margin.left - margin.right
   const height = 400 - margin.top - margin.bottom
 
@@ -82,6 +82,25 @@ export function renderHeatmap () {
       d3.select(this)
         .style('stroke', '#fff')
         .style('stroke-width', 1)
+    })
+    .on('click', function (event, d) {
+      // **Обчислення відсоткової частки продажів**
+      const totalSales = d3.sum(salesData.flatMap(d => d.sales.map(s => s.value)))
+      const percentage = ((d.value / totalSales) * 100).toFixed(2)
+
+      // Видаляємо старий текст перед додаванням нового
+      d3.select('#analytics-box').remove()
+
+      // Відображення результату у вигляді тексту на графіку
+      svg.append('text')
+        .attr('id', 'analytics-box')
+        .attr('x', width / 2)
+        .attr('y', height + 60)
+        .attr('text-anchor', 'middle')
+        .style('font-size', '14px')
+        .style('font-weight', 'bold')
+        .style('fill', 'darkred')
+        .text(`📊 ${d.genre} sales in ${d.region}: ${percentage}% of total sales`)
     })
 
   svg.append('g')
@@ -151,12 +170,11 @@ export function renderHeatmap () {
     .attr('width', legendWidth)
     .attr('height', legendHeight)
     .style('fill', 'url(#legend-gradient)')
-    .style('cursor', 'pointer') // Додавання курсору для інтерактивності
+    .style('cursor', 'pointer')
     .on('click', function (event) {
       const yPos = event.offsetY
       const clickedValue = legendScale.invert(yPos)
 
-      // Викликаємо функцію для фільтрації теплової карти
       filterHeatmap(clickedValue)
     })
 
@@ -167,16 +185,14 @@ export function renderHeatmap () {
     .style('font-size', '12px')
     .text('Sales (M)')
 
-  // Функція фільтрації теплової карти
   function filterHeatmap (threshold) {
     svg.selectAll('rect')
-      .style('opacity', d => d && d.value >= threshold ? 1 : 0.4) // Перевірка на наявність значення
-    // .style('stroke', d => d && d.value >= threshold ? '' : '')
+      .style('opacity', d => d && d.value >= threshold ? 1 : 0.4)
       .style('stroke-width', d => d && d.value >= threshold ? 2 : 1)
   }
 }
 
 document.addEventListener('timeRangeUpdated', () => {
   console.log('Heatmap is updating due to time range change')
-  renderHeatmap() // Перемальовуємо теплову карту з новим діапазоном років
+  renderHeatmap()
 })
