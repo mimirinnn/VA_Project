@@ -1,0 +1,16 @@
+#heatmap-chart {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+
+    rect {
+        stroke-width: 1;
+        transition: fill 0.3s;
+    }
+
+    text {
+        font-size: 12px;
+        fill: #333;
+    }
+}

@@ -1,4 +1,6 @@
-export function updateHeatmap (filters) {
-  console.log('🔴 Update Heatmap with filters:', filters)
-  // Додайте виклик рендерингу графіка
+import { renderHeatmap } from './Heatmap';
+
+export function updateHeatmap() {
+    console.log('🔵 Updating Heatmap...');
+    renderHeatmap();
 }
