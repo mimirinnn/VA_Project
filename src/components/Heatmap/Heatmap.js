@@ -21,7 +21,6 @@ export function renderHeatmap() {
     const margin = { top: 30, right: 40, bottom: 60, left: 120 };
     const width = 500 - margin.left - margin.right;
     const height = 400 - margin.top - margin.bottom;
-    const cellSize = width / regions.length;
 
     const svg = d3.select('#heatmap-chart')
         .append('svg')
@@ -36,6 +35,18 @@ export function renderHeatmap() {
     const maxSales = d3.max(salesData.flatMap(d => d.sales.map(s => s.value)));
     const colorScale = d3.scaleSequential(d3.interpolateBlues).domain([0, maxSales]);
 
+    // Додавання tooltip
+    const tooltip = d3.select('body')
+        .append('div')
+        .style('position', 'absolute')
+        .style('visibility', 'hidden')
+        .style('background', 'rgba(0, 0, 0, 0.75)')
+        .style('color', '#fff')
+        .style('padding', '5px 10px')
+        .style('border-radius', '5px')
+        .style('font-size', '12px')
+        .style('pointer-events', 'none');
+
     svg.selectAll()
         .data(salesData.flatMap(d => d.sales.map(s => ({ genre: d.genre, ...s }))))
         .enter()
@@ -45,7 +56,26 @@ export function renderHeatmap() {
         .attr('width', xScale.bandwidth())
         .attr('height', yScale.bandwidth())
         .style('fill', d => colorScale(d.value))
-        .style('stroke', '#fff');
+        .style('stroke', '#fff')
+        .on('mouseover', function (event, d) {
+            tooltip.style('visibility', 'visible')
+                .html(`<strong>${d.genre}</strong><br>${d.region}: ${d.value.toFixed(2)}M`);
+            
+            d3.select(this)
+                .style('stroke', 'black')
+                .style('stroke-width', 2);
+        })
+        .on('mousemove', (event) => {
+            tooltip.style('top', `${event.pageY - 30}px`)
+                   .style('left', `${event.pageX + 10}px`);
+        })
+        .on('mouseout', function () {
+            tooltip.style('visibility', 'hidden');
+            
+            d3.select(this)
+                .style('stroke', '#fff')
+                .style('stroke-width', 1);
+        });
 
     svg.append('g')
         .attr('transform', `translate(0,${height})`)
