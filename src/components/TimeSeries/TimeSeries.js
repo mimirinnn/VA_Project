@@ -2,6 +2,11 @@ import * as d3 from 'd3'
 
 // **Змінні для збереження вибраного діапазону**
 let selectedRange = null
+let showGameNames = true // За замовчуванням не показувати назви ігор
+
+document.getElementById('toggle-game-names').addEventListener('change', (event) => {
+  showGameNames = event.target.checked
+})
 
 // **Функція агрегації даних по роках для обраної категорії (жанри або платформи)**
 function aggregateData (data, category) {
@@ -175,26 +180,22 @@ export function renderTimeSeries (data, selectedCategory = 'Genre') {
           <strong>Year: ${d3.timeFormat('%Y')(hoveredData.year)}</strong><br>
           ${hoveredData.categories.map(c =>
             `<div style="color: ${colorScale(c.category)}">
-              <strong>${c.category}</strong>: ${c.totalSales.toLocaleString()}<br>
-              Games: ${c.games.slice(0, 3).join(', ')}...
+              <strong>${c.category}</strong>: ${c.totalSales.toLocaleString()}
+              ${showGameNames ? `<br>Games: ${c.games.slice(0, 3).join(', ')}...` : ''}
             </div>`
           ).join('')}
         `)
 
-        // **Затримуємо оновлення позиції tooltip, щоб отримати правильний розмір**
-        setTimeout(() => {
-          const tooltipWidth = tooltip.node().getBoundingClientRect().width
-          const pageWidth = window.innerWidth
+        // Визначаємо позицію tooltip
+        const tooltipWidth = tooltip.node().getBoundingClientRect().width
+        const pageWidth = window.innerWidth
+        let tooltipX = event.pageX + 10
+        if (event.pageX + tooltipWidth > pageWidth) {
+          tooltipX = event.pageX - tooltipWidth - 10
+        }
 
-          // **Переміщуємо tooltip вліво, якщо він виходить за межі екрану**
-          let tooltipX = event.pageX + 10
-          if (event.pageX + tooltipWidth > pageWidth - 20) {
-            tooltipX = event.pageX - tooltipWidth - 10
-          }
-
-          tooltip.style('left', `${tooltipX}px`)
-            .style('top', `${event.pageY - 30}px`)
-        }, 10) // Затримка в 10 мс, щоб браузер зміг порахувати розмір
+        tooltip.style('left', `${tooltipX}px`)
+          .style('top', `${event.pageY - 30}px`)
       }
     })
     .on('mouseout', function () {
