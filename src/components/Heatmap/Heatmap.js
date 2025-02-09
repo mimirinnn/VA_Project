@@ -270,7 +270,7 @@ barChart.append('text')
     .style('font-size', '14px')
     .style('font-weight', 'bold')
     .style('fill', 'black')
-    .text(`🔥 Топ-3 жанри у ${region}`);
+    .text(`🔥 Top 3 genres in ${region}`);
 
 }
 }
