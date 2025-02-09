@@ -4,6 +4,7 @@ import { initFilters, toggleFilterAvailability } from './components/Filters/Filt
 import { updateTimeSeries } from './components/TimeSeries'
 import { updateHeatmap } from './components/Heatmap'
 import './index.scss'
+import { updatePCA } from './components/PCA'
 
 async function startApp () {
   const data = await getProcessedData()
@@ -39,6 +40,7 @@ async function startApp () {
   function updateCharts () {
     updateTimeSeries(selectedCategory)
     updateHeatmap()
+    updatePCA(selectedCategory)
   }
 
   document.getElementById('toggle-category').addEventListener('change', function () {
