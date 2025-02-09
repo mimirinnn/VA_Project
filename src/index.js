@@ -58,6 +58,9 @@ async function startApp () {
     document.getElementById('category-label').textContent = selectedCategory === 'Genre' ? 'Genres' : 'Platforms'
     toggleFilterAvailability(selectedCategory)
     updateCharts()
+
+    // **Очищаємо попередній тренд продажів**
+    document.getElementById('sales-trend').innerHTML = ''
   })
 
   document.getElementById('year-slider-min').addEventListener('input', () => { updateFilters({}); updateCharts() })

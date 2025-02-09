@@ -1,5 +1,5 @@
 import * as d3 from 'd3'
-import { updateTimeRange } from '../../utils/stateManager'
+import { updateTimeRange, getFilteredData } from '../../utils/stateManager'
 
 // **Змінні для збереження вибраного діапазону**
 let selectedRange = null
@@ -25,6 +25,51 @@ function aggregateData (data, category) {
     year,
     categories: categories.map(([category, { totalSales, games }]) => ({ category, totalSales, games }))
   })).sort((a, b) => a.year - b.year) // Сортуємо за роками
+}
+
+function calculateSalesTrend (startYear, endYear, selectedCategory) {
+  const filteredData = getFilteredData()
+
+  // Визначаємо, що аналізувати: жанри чи платформи
+  const categoryKey = selectedCategory === 'Platform' ? 'Platform' : 'Genre'
+
+  // Сумарні продажі по всіх категоріях (жанрах або платформах)
+  const totalSalesByYear = d3.rollups(
+    filteredData,
+    v => d3.sum(v, d => d.TotalSales),
+    d => d.Year
+  )
+
+  const totalSalesMap = new Map(totalSalesByYear)
+  const startSales = totalSalesMap.get(startYear) || 0
+  const endSales = totalSalesMap.get(endYear) || 0
+  const totalChange = startSales !== 0 ? ((endSales - startSales) / startSales) * 100 : 0
+
+  // Продажі по кожній категорії (жанрах або платформах)
+  const categorySalesByYear = d3.rollups(
+    filteredData,
+    v => d3.sum(v, d => d.TotalSales),
+    d => d[categoryKey], // Динамічно вибираємо Genre або Platform
+    d => d.Year
+  )
+
+  const categoryTrends = categorySalesByYear.map(([category, years]) => {
+    const salesMap = new Map(years)
+    const startCategorySales = salesMap.get(startYear) || 0
+    const endCategorySales = salesMap.get(endYear) || 0
+    const categoryChange = startCategorySales !== 0 ? ((endCategorySales - startCategorySales) / startCategorySales) * 100 : 0
+    return { category, categoryChange }
+  })
+
+  // Форматування у горизонтальний список
+  const categoryDetails = categoryTrends
+    .map(c => `<span><strong>${c.category}</strong>: ${c.categoryChange.toFixed(2)}%</span>`)
+    .join(' | ')
+
+  // Оновлення значення в `div`
+  document.getElementById('sales-trend').innerHTML =
+    `<strong>${selectedCategory} Sales Change: ${totalChange.toFixed(2)}% (${startYear} → ${endYear})</strong><br>` +
+    categoryDetails
 }
 
 // **Головна функція рендерингу графіка**
@@ -228,6 +273,9 @@ export function renderTimeSeries (data, selectedCategory = 'Genre') {
 
       // **Оновлення глобального стану**
       updateTimeRange([x0.getFullYear(), x1.getFullYear()])
+
+      // Викликаємо обчислення тренду з урахуванням вибраного режиму
+      calculateSalesTrend(x0.getFullYear(), x1.getFullYear(), selectedCategory)
     })
 
   svg.append('g')
