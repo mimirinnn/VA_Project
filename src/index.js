@@ -39,16 +39,19 @@ async function startApp () {
 
   console.log('Applying top filters:', topPlatforms, topGenres)
   updateFilters({ platform: topPlatforms, genre: topGenres })
-  console.log('Updated filters after top selection:', getFilters())
+  updateFilters({ year: getFilters().year }) // Оновлюємо рік на правильне значення
 
-  updateFilters({ year: getFilters().year }) // Тепер оновлюємо рік на правильне значення
+  console.log(`Applied year range: ${getFilters().year.min} - ${getFilters().year.max}`)
+
 
   console.log(`Applied year range: ${getFilters().year.min} - ${getFilters().year.max}`)
 
   let selectedCategory = 'Genre'
 
   function updateCharts () {
-    updateTimeSeries(selectedCategory)
+    // initializeFilters(data, INITIAL_YEAR_RANGE)
+    setTimeout(() => updateTimeSeries(selectedCategory), 100) // Додаємо коротку затримку для синхронізації
+
     updateHeatmap()
     updatePCA(selectedCategory)
   }
