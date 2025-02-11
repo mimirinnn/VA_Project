@@ -13,7 +13,7 @@ import * as d3 from 'd3'
  *
  * До легенди також інтегровано область статистики.
  *
- * @param {Array} data - Масив об'єктів з полями pc1, pc2, cluster, regionCluster, Name (або Game), NA_Sales, EU_Sales, JP_Sales, Global_Sales.
+ * @param {Array} data - Масив об'єктів з полями pc1, pc2, cluster, regionCluster, Name (або Game), NA_Sales, EU_Sales, JP_Sales, Other_Sales.
  * @param {String} selectedCategory - 'Genre' або 'Platform'.
  */
 export function renderPCA (data, selectedCategory) {
@@ -29,8 +29,8 @@ export function renderPCA (data, selectedCategory) {
   const hoverSymbolSize = baseSymbolSize * 2.5
 
   // Масив з іменами полів продажів (порядок відповідає регіональним кластерам)
-  const regionSalesFields = ['NA_Sales', 'EU_Sales', 'JP_Sales', 'Global_Sales']
-  const regionNames = ['NA Market', 'EU Market', 'JP Market', 'Global Hits']
+  const regionSalesFields = ['NA_Sales', 'EU_Sales', 'JP_Sales', 'Other_Sales']
+  const regionNames = ['NA Market', 'EU Market', 'JP Market', 'Other Regions']
 
   // Створення SVG
   const svg = d3.select('#pca-chart')
@@ -123,7 +123,6 @@ export function renderPCA (data, selectedCategory) {
     .style('visibility', 'hidden')
   const tooltipRect = tooltipGroup.append('rect')
     .attr('fill', 'white')
-    .attr('fill-opacity', 0.9)  // Менш прозорий фон
   const tooltipText = tooltipGroup.append('text')
     .attr('font-size', '12px')
     .attr('font-family', 'sans-serif')
@@ -161,19 +160,19 @@ export function renderPCA (data, selectedCategory) {
         .style('fill', d3.color(regionColorScale(d.regionCluster)).darker(2))
         .style('stroke', 'black')
         .style('stroke-width', 3)
-      
+
       // Отримуємо координати миші відносно SVG
       const [x, y] = d3.pointer(event, svg.node())
-      
+
       // Отримуємо назву гри (d.Name або d.Game)
-      const gameName = d.Name || d.Game || 'Unknown Game';
+      const gameName = d.Name || d.Game || 'Unknown Game'
       // Визначаємо індекс регіону та відповідне поле продажів
-      const regionIndex = d.regionCluster  // припускаємо, що це число (0,1,2,3)
-      const salesField = regionSalesFields[regionIndex] || '';
-      const salesValue = d[salesField] !== undefined ? d[salesField] : 'N/A';
+      const regionIndex = d.regionCluster // припускаємо, що це число (0,1,2,3)
+      const salesField = regionSalesFields[regionIndex] || ''
+      const salesValue = d[salesField] !== undefined ? d[salesField] : 'N/A'
 
       tooltipText.text(`Game: ${gameName}, Sales: ${salesValue}M`)
-      
+
       // Отримуємо розміри тексту
       const bbox = tooltipText.node().getBBox()
       tooltipRect
@@ -181,11 +180,11 @@ export function renderPCA (data, selectedCategory) {
         .attr('y', bbox.y - 2)
         .attr('width', bbox.width + 4)
         .attr('height', bbox.height + 4)
-      
+
       // Використовуємо просту логіку: якщо координата x більше половини SVG, відображаємо tooltip зліва
       const svgWidth = +svg.attr('width')
       const offsetX = x > svgWidth / 2 ? -bbox.width - 10 : 10
-      
+
       tooltipGroup
         .style('visibility', 'visible')
         .attr('transform', `translate(${x + offsetX}, ${y - 10})`)

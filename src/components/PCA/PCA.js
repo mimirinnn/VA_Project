@@ -22,8 +22,7 @@ export function applyPCA (data) {
     parseFloat(d.NA_Sales) || 0,
     parseFloat(d.EU_Sales) || 0,
     parseFloat(d.JP_Sales) || 0,
-    parseFloat(d.Other_Sales) || 0,
-    parseFloat(d.Global_Sales) || 0
+    parseFloat(d.Other_Sales) || 0
   ])
 
   const numFeatures = features[0].length
