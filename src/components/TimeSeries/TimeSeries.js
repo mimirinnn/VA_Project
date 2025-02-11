@@ -1,5 +1,5 @@
 import * as d3 from 'd3'
-import { updateTimeRange, getFilteredData } from '../../utils/stateManager'
+import { updateTimeRange, getFilteredData, getFilters } from '../../utils/stateManager'
 
 // **Змінні для збереження вибраного діапазону**
 let selectedRange = null
@@ -11,20 +11,23 @@ document.getElementById('toggle-game-names').addEventListener('change', (event) 
 
 // **Функція агрегації даних по роках для обраної категорії (жанри або платформи)**
 function aggregateData (data, category) {
+  const filters = getFilters() // Отримуємо поточні фільтри
+  const regionKey = filters.region === 'all' ? 'TotalSales' : `${filters.region}_Sales` // Динамічне вибрання регіону
+
   const aggregated = d3.rollups(
     data,
     v => ({
-      totalSales: d3.sum(v, d => d.TotalSales),
-      games: v.map(d => d.Name) // Додаємо назви ігор
+      totalSales: d3.sum(v, d => d[regionKey]), // Використовуємо відповідний регіон
+      games: v.map(d => d.Name)
     }),
-    d => d3.timeYear(new Date(d.Year, 0, 1)), // Групування по роках як датах
-    d => d[category] // Групування по обраній категорії (Genre або Platform)
+    d => d3.timeYear(new Date(d.Year, 0, 1)),
+    d => d[category]
   )
 
   return aggregated.map(([year, categories]) => ({
     year,
     categories: categories.map(([category, { totalSales, games }]) => ({ category, totalSales, games }))
-  })).sort((a, b) => a.year - b.year) // Сортуємо за роками
+  })).sort((a, b) => a.year - b.year)
 }
 
 function calculateSalesTrend (startYear, endYear, selectedCategory) {
