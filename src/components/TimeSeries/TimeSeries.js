@@ -24,10 +24,14 @@ function aggregateData (data, category) {
     d => d[category]
   )
 
-  return aggregated.map(([year, categories]) => ({
+  const result = aggregated.map(([year, categories]) => ({
     year,
     categories: categories.map(([category, { totalSales, games }]) => ({ category, totalSales, games }))
   })).sort((a, b) => a.year - b.year)
+
+  console.log('aggregateData - Data range:', d3.min(result, d => d.year), '-', d3.max(result, d => d.year))
+
+  return result
 }
 
 function calculateSalesTrend (startYear, endYear, selectedCategory) {

@@ -1,3 +1,5 @@
+import * as d3 from 'd3'
+
 const state = {
   filters: {
     year: { min: null, max: null },
@@ -92,13 +94,28 @@ export function resetFilters () {
 
 // Отримати відфільтровані дані
 export function getFilteredData () {
-  console.log('getFilteredData - Current filters:', state.filters)
+  console.log('getFilteredData - Checking filters:', state.filters.year.min, '-', state.filters.year.max)
 
-  return state.originalData
-    .filter(d => d.Year >= state.filters.year.min && d.Year <= state.filters.year.max) // **Рік фільтрується першим**
-    .filter(d => state.filters.platform.length === 0 || state.filters.platform.includes(d.Platform)) // **Платформи фільтруються коректно**
-    .filter(d => state.filters.genre.length === 0 || state.filters.genre.includes(d.Genre))
-    .filter(d => state.filters.region === 'all' || d[`${state.filters.region}_Sales`] > 0)
+  const availableYears = state.originalData.map(d => d.Year)
+  console.log('Available years before filtering:', Math.min(...availableYears), '-', Math.max(...availableYears))
+
+  // **Крок 1: Фільтрація за роками**
+  let filteredData = state.originalData.filter(d => d.Year >= state.filters.year.min && d.Year <= state.filters.year.max)
+  console.log('After year filter:', d3.min(filteredData, d => d.Year), '-', d3.max(filteredData, d => d.Year), 'Count:', filteredData.length)
+
+  // **Крок 2: Фільтрація за платформами**
+  filteredData = filteredData.filter(d => state.filters.platform.length === 0 || state.filters.platform.includes(d.Platform))
+  console.log('After platform filter:', d3.min(filteredData, d => d.Year), '-', d3.max(filteredData, d => d.Year), 'Count:', filteredData.length)
+
+  // **Крок 3: Фільтрація за жанрами**
+  filteredData = filteredData.filter(d => state.filters.genre.length === 0 || state.filters.genre.includes(d.Genre))
+  console.log('After genre filter:', d3.min(filteredData, d => d.Year), '-', d3.max(filteredData, d => d.Year), 'Count:', filteredData.length)
+
+  // **Крок 4: Фільтрація за регіоном**
+  filteredData = filteredData.filter(d => state.filters.region === 'all' || d[`${state.filters.region}_Sales`] > 0)
+  console.log('After region filter:', d3.min(filteredData, d => d.Year), '-', d3.max(filteredData, d => d.Year), 'Count:', filteredData.length)
+
+  return filteredData
 }
 
 // Отримати поточні значення фільтрів

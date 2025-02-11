@@ -24,10 +24,17 @@ async function startApp () {
     genreTotals[d.Genre] = (genreTotals[d.Genre] || 0) + d.TotalSales
   })
 
+  const oldPlatforms = ['NES', 'SNES', 'GB', 'GBA', 'PS1'] // Ручне додавання старих платформ
   const topPlatforms = Object.entries(platformTotals)
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
     .map(d => d[0])
+
+  // **Якщо всі топові платформи починаються після 2000, додаємо старі**
+  const selectedPlatforms = topPlatforms.some(p => parseInt(p.replace(/\D/g, '')) < 2000)
+    ? topPlatforms.slice(0, 5) // Якщо є старі платформи, беремо топ-5
+    : [...topPlatforms.slice(0, 3), ...oldPlatforms.slice(0, 2)] // Інакше додаємо ретро-платформи
+
+  console.log('Updated Top Platforms:', selectedPlatforms)
 
   const topGenres = Object.entries(genreTotals)
     .sort((a, b) => b[1] - a[1])
@@ -35,14 +42,19 @@ async function startApp () {
     .map(d => d[0])
 
   initializeFilters(data, INITIAL_YEAR_RANGE)
-  initFilters(uniquePlatforms, uniqueGenres, topPlatforms, topGenres)
+  initFilters(uniquePlatforms, uniqueGenres, selectedPlatforms, topGenres)
 
   console.log('Applying top filters:', topPlatforms, topGenres)
-  updateFilters({ platform: topPlatforms, genre: topGenres })
-  updateFilters({ year: getFilters().year }) // Оновлюємо рік на правильне значення
+
+  // **Оновлюємо рік перед тим, як оновлювати платформи та жанри**
+  updateFilters({ year: INITIAL_YEAR_RANGE })
+
+  setTimeout(() => {
+    updateFilters({ platform: topPlatforms, genre: topGenres })
+    console.log('Updated filters after top selection:', getFilters())
+  }, 50) // Затримка, щоб гарантувати правильний порядок
 
   console.log(`Applied year range: ${getFilters().year.min} - ${getFilters().year.max}`)
-
 
   console.log(`Applied year range: ${getFilters().year.min} - ${getFilters().year.max}`)
 
