@@ -58,12 +58,17 @@ export function renderPCA (data, selectedCategory) {
     .attr('class', 'points-group')
     .attr('clip-path', 'url(#clip)')
 
-  // Створення лінійних шкал
+  // Встановлюємо симетричні домени для PC1 та PC2, щоб 0 був в центрі.
+  const xExtent = d3.extent(data, d => d.pc1)
+  const xMax = Math.max(Math.abs(xExtent[0]), Math.abs(xExtent[1]))
+  const yExtent = d3.extent(data, d => d.pc2)
+  const yMax = Math.max(Math.abs(yExtent[0]), Math.abs(yExtent[1]))
+
   const xScale = d3.scaleLinear()
-    .domain(d3.extent(data, d => d.pc1))
+    .domain([-xMax, xMax])
     .range([0, width])
   const yScale = d3.scaleLinear()
-    .domain(d3.extent(data, d => d.pc2))
+    .domain([-yMax, yMax])
     .range([height, 0])
 
   // Історія зуму
@@ -73,27 +78,31 @@ export function renderPCA (data, selectedCategory) {
     yDomain: yScale.domain()
   })
 
-  // Створення осей
+  // Створення осей: розміщуємо горизонтальну вісь у точці y = yScale(0)
+  // та вертикальну – у точці x = xScale(0)
   const xAxis = d3.axisBottom(xScale)
   const yAxis = d3.axisLeft(yScale)
   chartGroup.append('g')
     .attr('class', 'x-axis')
-    .attr('transform', `translate(0, ${height})`)
+    .attr('transform', `translate(0, ${yScale(0)})`)
     .call(xAxis)
   chartGroup.append('g')
     .attr('class', 'y-axis')
+    .attr('transform', `translate(${xScale(0)}, 0)`)
     .call(yAxis)
 
-  // Назви осей
+  // Назви осей (оновлено положення, щоб відповідати новому розташуванню осей)
   chartGroup.append('text')
-    .attr('text-anchor', 'middle')
-    .attr('x', width / 2)
-    .attr('y', height + margin.bottom - 10)
+    .attr('text-anchor', 'end')
+    .attr('x', width)
+    .attr('y', yScale(0) - 10)
     .style('font-size', '14px')
     .text('PC1')
   chartGroup.append('text')
-    .attr('text-anchor', 'middle')
-    .attr('transform', `translate(-40, ${height / 2}) rotate(-90)`)
+    .attr('text-anchor', 'end')
+    .attr('x', xScale(0) - 10)
+    .attr('y', 15)
+    .attr('transform', `rotate(-90, ${xScale(0) - 10}, 15)`)
     .style('font-size', '14px')
     .text('PC2')
 
@@ -148,7 +157,7 @@ export function renderPCA (data, selectedCategory) {
     .style('stroke-width', 0.5)
     .style('opacity', 0.8)
 
-  // Додаємо hover-ефект: підняття елемента, збільшення, затемнення та додавання чорного контуру
+  // Додаємо hover-ефект
   points
     .on('mouseover', function (event, d) {
       // Переміщення елемента на передній план
@@ -181,7 +190,7 @@ export function renderPCA (data, selectedCategory) {
         .attr('width', bbox.width + 4)
         .attr('height', bbox.height + 4)
 
-      // Використовуємо просту логіку: якщо координата x більше половини SVG, відображаємо tooltip зліва
+      // Використовуємо просту логіку для розміщення tooltip
       const svgWidth = +svg.attr('width')
       const offsetX = x > svgWidth / 2 ? -bbox.width - 10 : 10
 
@@ -201,7 +210,6 @@ export function renderPCA (data, selectedCategory) {
         .transition()
         .duration(200)
         .attr('d', d3.symbol().type(symbolScale(d[selectedCategory])).size(baseSymbolSize)())
-        .style('fill', regionColorScale(d.regionColor || d.regionCluster))
         .style('fill', regionColorScale(d.regionCluster))
         .style('stroke', 'black')
         .style('stroke-width', 0.5)
@@ -305,10 +313,12 @@ export function renderPCA (data, selectedCategory) {
     chartGroup.select('.x-axis')
       .transition()
       .duration(750)
+      .attr('transform', `translate(0, ${yScale(0)})`)
       .call(xAxis)
     chartGroup.select('.y-axis')
       .transition()
       .duration(750)
+      .attr('transform', `translate(${xScale(0)}, 0)`)
       .call(yAxis)
     pointsGroup.selectAll('path.pca-point')
       .transition()
@@ -329,10 +339,12 @@ export function renderPCA (data, selectedCategory) {
       chartGroup.select('.x-axis')
         .transition()
         .duration(750)
+        .attr('transform', `translate(0, ${yScale(0)})`)
         .call(xAxis)
       chartGroup.select('.y-axis')
         .transition()
         .duration(750)
+        .attr('transform', `translate(${xScale(0)}, 0)`)
         .call(yAxis)
       pointsGroup.selectAll('path.pca-point')
         .transition()
@@ -357,8 +369,12 @@ export function renderPCA (data, selectedCategory) {
     const newYDomain = [currentYDomain[0] + shiftY, currentYDomain[1] + shiftY]
     xScale.domain(newXDomain)
     yScale.domain(newYDomain)
-    chartGroup.select('.x-axis').call(xAxis)
-    chartGroup.select('.y-axis').call(yAxis)
+    chartGroup.select('.x-axis')
+      .attr('transform', `translate(0, ${yScale(0)})`)
+      .call(xAxis)
+    chartGroup.select('.y-axis')
+      .attr('transform', `translate(${xScale(0)}, 0)`)
+      .call(yAxis)
     pointsGroup.selectAll('path.pca-point')
       .attr('transform', d => `translate(${xScale(d.pc1)}, ${yScale(d.pc2)})`)
     updateStats()
